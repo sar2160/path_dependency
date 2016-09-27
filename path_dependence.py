@@ -1,6 +1,8 @@
 
 import random
-
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import seaborn
 
 class Urn:
         def __init__(self,m,b):
@@ -27,7 +29,6 @@ class Urn:
             ''' runs a process type e.g, polya on itself'''
             return process_type()
 
-
         def polya(self):
             choose = self.choose_random()
             self.contents.extend([choose for i in range(2)])
@@ -35,16 +36,51 @@ class Urn:
         def balancing(self):
                 choose = self.choose_random()
                 opposite = [s for s in self.contents if s not in choose][0]
-
                 self.contents.extend(opposite)
 
 
 
-my_urn = Urn(1,1)
+def create_process(urn ,process_type, periods=100,filename='process_animation.gif',just_outputs=False,chart_title='Process Animation',):
+    p_time = []
 
-p_time = []
-for n in range(100):
-    my_urn.run_process(my_urn.balancing)
-    p_time.append(my_urn.get_p())
+    x_axis = range(periods)
 
-print p_time
+    for n in x_axis:
+        urn.run_process(process_type)
+        p_time.append(urn.get_p())
+
+    if just_outputs:
+        return p_time
+
+    y = p_time
+
+    fig, ax = plt.subplots()
+    line, = ax.plot(x_axis, y, color='#800000')
+
+    def update(num, x_axis, y, line):
+        line.set_data(x_axis[:num], y[:num])
+        line.axes.axis([0, periods, 0, 1])
+        return line,
+
+    plt.title(chart_title)
+    plt.xlabel('Periods (t)')
+    plt.ylabel("Pct Maroon Balls")
+    ani = animation.FuncAnimation(fig, update, len(x_axis), fargs=[x_axis, y, line],
+                              interval=35, blit=False)
+    ani.save(filename)
+    plt.show()
+
+
+def main():
+    my_urn = Urn(1,1)
+    create_process(my_urn,process_type=my_urn.polya,periods=250,chart_title='Polya Process',filename='animations/polya.gif')
+    create_process(my_urn,process_type=my_urn.balancing,periods=250,chart_title='Balancing Process',filename='animations/balancing.gif')
+
+    biased_urn = Urn(1,2)
+
+    create_process(biased_urn,process_type=biased_urn.polya,periods=250,chart_title='Biased Polya Process',filename='animations/biased_polya.gif')
+
+
+
+if __name__ == "__main__":
+    main()
